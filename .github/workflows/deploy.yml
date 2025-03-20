@@ -6,6 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      # ✅ Set Git user identity
+      - name: Configure Git User
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
       - run: |
           sudo chmod +x ./scripts/deploy_templates.sh
           ./scripts/deploy_templates.sh
