@@ -1,0 +1,9 @@
+name: Deploy Codespace Templates
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/deploy_templates.sh
