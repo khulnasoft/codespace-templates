@@ -1,4 +1,4 @@
-name: Deploy Codespace Templates
+name: 🚀 Deploy Codespace Templates
 
 on:
   push:
@@ -7,21 +7,121 @@ on:
       - 'templates/**'
       - '.github/workflows/deploy.yml'
       - 'scripts/deploy_templates.sh'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+# Set environment variables
+env:
+  DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}
+  LOG_LEVEL: info
+  GIT_COMMIT_MESSAGE: "chore(deploy): update templates [skip ci]"
 
 # Allow the workflow to create commits
 permissions:
   contents: write
+  pull-requests: write
+  issues: write
+  statuses: write
 
 jobs:
-  deploy:
-    name: Deploy Templates
+  validate:
+    name: 🔍 Validate Templates
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for proper git diff
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+      
+      - name: Validate JSON schema
+        id: validate_schema
+        run: |
+          if ! python -c "
+          import json
+          import jsonschema
+          from jsonschema import validate
+          
+          try:
+              with open('templates/templates.json') as f:
+                  instance = json.load(f)
+              jsonschema.Draft202012Validator.check_schema(instance)
+              print('✅ Schema validation passed')
+          except Exception as e:
+              print(f'❌ Schema validation failed: {str(e)}')
+              exit(1)
+          
+          # Additional validation
+          required_fields = ['id', 'name', 'description', 'category', 'path']
+          for template in instance.get('templates', []):
+              for field in required_fields:
+                  if field not in template:
+                      print(f'❌ Missing required field "{field}" in template: {template.get("id", "unknown")}')
+                      exit(1)
+          
+          print('✅ All templates have required fields')
+          "
+          then
+              echo "::error::Template validation failed"
+              exit 1
+          fi
+      
+      - name: Check template structure
+        run: |
+          for dir in templates/*/; do
+            template=$(basename "$dir")
+            echo "🔍 Validating template: $template"
+            
+            # Check required files
+            for file in "README.md" ".devcontainer/devcontainer.json"; do
+              if [ ! -f "$dir/$file" ]; then
+                echo "::error file=$dir/$file::Missing required file: $template/$file"
+                exit 1
+              fi
+            done
+            
+            # Validate devcontainer.json
+            if ! jq empty "$dir/.devcontainer/devcontainer.json" 2>/dev/null; then
+              echo "::error file=$dir/.devcontainer/devcontainer.json::Invalid JSON in $template/.devcontainer/devcontainer.json"
+              exit 1
+            fi
+            
+            echo "✅ $template validation passed"
+          done
+  
+  deploy:
+    name: 🚀 Deploy Templates
+    needs: validate
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ env.DEPLOY_ENV }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set up Git
@@ -29,19 +129,80 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions@users.noreply.github.com'
       
-      - name: Make script executable
-        run: chmod +x ./scripts/deploy_templates.sh
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
       
       - name: Run deployment
+        id: deploy
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions@users.noreply.github.com
+          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
         run: |
-          ./scripts/deploy_templates.sh
+          set -e
+          echo "🚀 Starting deployment to $DEPLOY_ENV environment"
+          
+          # Make script executable
+          chmod +x ./scripts/deploy_templates.sh
+          
+          # Run deployment
+          if ! ./scripts/deploy_templates.sh; then
+            echo "::error::Deployment failed"
+            exit 1
+          fi
+          
+          # Check for changes
+          if ! git diff --quiet -- "deployed_templates"; then
+            echo "📝 Changes detected, creating commit..."
+            git add deployed_templates/
+            git commit -m "$GIT_COMMIT_MESSAGE"
+            git push
+            echo "✅ Changes pushed to repository"
+            echo "deployed=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ No changes to deploy"
+            echo "deployed=false" >> $GITHUB_OUTPUT
+          fi
       
-      - name: Show deployment status
+      - name: Create deployment status
         if: always()
-        run: |
-          echo "Deployment completed with status: ${{ job.status }}"
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          deployment_id: ${{ github.run_id }}
+          env: ${{ env.DEPLOY_ENV }}
+      
+      - name: Update PR comment
+        if: github.event_name == 'pull_request' && steps.deploy.outputs.deployed == 'true'
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            🎉 Templates have been successfully deployed to **${{ env.DEPLOY_ENV }}**!
+            
+            **Deployment Details:**
+            - Commit: ${{ github.sha }}
+            - Environment: ${{ env.DEPLOY_ENV }}
+            - Timestamp: ${{ steps.deploy.outputs.timestamp }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: false
+      
+      - name: Send notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_COLOR: danger
+          SLACK_TITLE: "🚨 Deployment Failed"
+          SLACK_MESSAGE: "Deployment to ${{ env.DEPLOY_ENV }} failed for ${{ github.repository }}@${{ github.ref }}"
+          MSG_MINIMAL: "View the error: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

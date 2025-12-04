@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "@security-team"
+    labels:
+      - "dependencies"
+      - "security"
+    versioning-strategy: increase-if-necessary
+    ignore:
+      - dependency-name: "actions/*"
+        versions: ["1.x"]

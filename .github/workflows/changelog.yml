@@ -1,0 +1,57 @@
+name: Generate Changelog
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (e.g., v1.0.0)
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Install git-chglog
+        run: |
+          go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+      
+      - name: Generate CHANGELOG.md
+        id: changelog
+        run: |
+          # Configure git-chglog
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Generate changelog
+          git-chglog --config .chglog/config.yml -o CHANGELOG.md
+          
+          # Check if there are changes
+          git diff --exit-code CHANGELOG.md || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push CHANGELOG.md
+        if: steps.changelog.outputs.changes == 'true'
+        run: |
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog [skip ci]"
+          git push
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: CHANGELOG.md
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

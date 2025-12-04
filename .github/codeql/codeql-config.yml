@@ -1,0 +1,22 @@
+name: "Custom CodeQL Configuration"
+
+disable-default-queries: false
+disable-local-queries: false
+
+queries:
+  - name: Security and Quality
+    uses: security-and-quality
+  - name: Additional Security Queries
+    uses: .github/codeql/custom-queries
+
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/__tests__/**"
+  - "**/test/**"
+  - "**/vendor/**"
+  - "**/dist/**"
+  - "**/build/**"
+
+query-filters:
+  - exclude:
+      id: "js/trivial-conditional"

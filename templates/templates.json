@@ -1,76 +1,115 @@
 {
-  "templates": [
-    {
-      "id": "react",
-      "name": "React",
-      "description": "A modern React template with Vite, TypeScript, and ESLint",
-      "category": "Frontend",
-      "tags": ["react", "typescript", "vite"],
-      "path": "react"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Code Template Catalog",
+  "description": "Schema for code template catalog with version and dependency information",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "default": "1.0.0"
     },
-    {
-      "id": "nextjs",
-      "name": "Next.js",
-      "description": "A full-stack React framework with server-side rendering",
-      "category": "Fullstack",
-      "tags": ["nextjs", "react", "typescript"],
-      "path": "nextjs"
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp in ISO 8601 format"
     },
-    {
-      "id": "express",
-      "name": "Express",
-      "description": "A minimal Node.js web application framework",
-      "category": "Backend",
-      "tags": ["nodejs", "express", "javascript"],
-      "path": "express"
-    },
-    {
-      "id": "django",
-      "name": "Django",
-      "description": "A high-level Python web framework",
-      "category": "Backend",
-      "tags": ["python", "django", "sqlite"],
-      "path": "django"
-    },
-    {
-      "id": "flask",
-      "name": "Flask",
-      "description": "A lightweight WSGI web application framework",
-      "category": "Backend",
-      "tags": ["python", "flask", "rest"],
-      "path": "flask"
-    },
-    {
-      "id": "jupyter",
-      "name": "Jupyter",
-      "description": "Jupyter Notebook environment with common data science packages",
-      "category": "Data Science",
-      "tags": ["python", "jupyter", "data-science"],
-      "path": "jupyter"
-    },
-    {
-      "id": "preact",
-      "name": "Preact",
-      "description": "Fast 3kB alternative to React with the same modern API",
-      "category": "Frontend",
-      "tags": ["preact", "javascript", "vite"],
-      "path": "preact"
-    },
-    {
-      "id": "rails",
-      "name": "Ruby on Rails",
-      "description": "A full-stack web application framework for Ruby",
-      "category": "Fullstack",
-      "tags": ["ruby", "rails", "postgresql"],
-      "path": "rails"
-    },
-    {
-      "id": "dotnet",
-      "name": ".NET Core",
-      "description": "Cross-platform .NET web application",
-      "category": "Backend",
-      "tags": ["csharp", "dotnet", "webapi"],
-      "path": "dotnet"
+    "templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "category", "path"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the template"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the template"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the template"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["Frontend", "Backend", "Fullstack", "Data Science", "Mobile", "Other"],
+            "description": "Primary category of the template"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of tags for searching and categorization"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path to the template directory"
+          },
+          "version": {
+            "type": "string",
+            "description": "Template version in semver format"
+          },
+          "minRuntimeVersion": {
+            "type": "string",
+            "description": "Minimum required runtime version"
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Key-value pairs of dependencies and their versions"
+          },
+          "compatibility": {
+            "type": "object",
+            "properties": {
+              "node": {
+                "type": "string",
+                "description": "Node.js version compatibility"
+              },
+              "python": {
+                "type": "string",
+                "description": "Python version compatibility"
+              },
+              "dotnet": {
+                "type": "string",
+                "description": ".NET SDK version compatibility"
+              },
+              "ruby": {
+                "type": "string",
+                "description": "Ruby version compatibility"
+              }
+            }
+          },
+          "maintainer": {
+            "type": "string",
+            "description": "Maintainer or team responsible for the template"
+          },
+          "repository": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the template's source repository"
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp in ISO 8601 format"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the template is deprecated"
+          },
+          "deprecationMessage": {
+            "type": "string",
+            "description": "Message explaining deprecation and migration path"
+          }
+        }
+      }
     }
-  ]
+  },
+  "required": ["templates"]
 }
