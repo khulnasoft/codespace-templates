@@ -1,0 +1,76 @@
+{
+  "templates": [
+    {
+      "id": "react",
+      "name": "React",
+      "description": "A modern React template with Vite, TypeScript, and ESLint",
+      "category": "Frontend",
+      "tags": ["react", "typescript", "vite"],
+      "path": "react"
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js",
+      "description": "A full-stack React framework with server-side rendering",
+      "category": "Fullstack",
+      "tags": ["nextjs", "react", "typescript"],
+      "path": "nextjs"
+    },
+    {
+      "id": "express",
+      "name": "Express",
+      "description": "A minimal Node.js web application framework",
+      "category": "Backend",
+      "tags": ["nodejs", "express", "javascript"],
+      "path": "express"
+    },
+    {
+      "id": "django",
+      "name": "Django",
+      "description": "A high-level Python web framework",
+      "category": "Backend",
+      "tags": ["python", "django", "sqlite"],
+      "path": "django"
+    },
+    {
+      "id": "flask",
+      "name": "Flask",
+      "description": "A lightweight WSGI web application framework",
+      "category": "Backend",
+      "tags": ["python", "flask", "rest"],
+      "path": "flask"
+    },
+    {
+      "id": "jupyter",
+      "name": "Jupyter",
+      "description": "Jupyter Notebook environment with common data science packages",
+      "category": "Data Science",
+      "tags": ["python", "jupyter", "data-science"],
+      "path": "jupyter"
+    },
+    {
+      "id": "preact",
+      "name": "Preact",
+      "description": "Fast 3kB alternative to React with the same modern API",
+      "category": "Frontend",
+      "tags": ["preact", "javascript", "vite"],
+      "path": "preact"
+    },
+    {
+      "id": "rails",
+      "name": "Ruby on Rails",
+      "description": "A full-stack web application framework for Ruby",
+      "category": "Fullstack",
+      "tags": ["ruby", "rails", "postgresql"],
+      "path": "rails"
+    },
+    {
+      "id": "dotnet",
+      "name": ".NET Core",
+      "description": "Cross-platform .NET web application",
+      "category": "Backend",
+      "tags": ["csharp", "dotnet", "webapi"],
+      "path": "dotnet"
+    }
+  ]
+}
